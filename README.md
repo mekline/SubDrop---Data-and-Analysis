@@ -18,7 +18,11 @@ This repository contains:
 
 ## SubDrop.R
 
-- An R script that generates uses SubDrop_reconciled.csv to produce all stats and figs reported in the paper
+- An R script that generates uses SubDrop_reconciled.csv to produce all stats and figs reported in the paper. Will be deprecated by....
+
+## SubDrop.Rmd
+
+- An attempt to solve reproducibility with a dockerized RMarkdown pipeline! This will also make a pretty doc (?) for people who prefer not to read R scripts with their eyes. 
 
 ## BlindCoding.csv
 

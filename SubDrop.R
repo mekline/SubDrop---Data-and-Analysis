@@ -31,7 +31,6 @@ directory = getwd()
 
 #Initialize dataset
 subtable = data.frame(NULL)
-
 #Load csv with Alldata into variable
 subtable = read.csv(paste0(directory, "/SubDrop_reconciled.csv"), header = TRUE, stringsAsFactors = FALSE)
 
@@ -70,7 +69,7 @@ table(dropped$Final.Reason, dropped$Experiment)
 #SD: 'subject drop' is the 'correct answer', other name for this condition is 'two fruits'
 #OD: aka 'two animals'
 
-#Note- we tried 2-trial and 4-trial versions of the task.  With within-subj 4-trial version, we saw big carryover effects. So, analyze just 1st 2 trials
+#Note- we tried 2-trial (between-subj) and 4-trial (within-subj) versions of the task.  With within-subj 4-trial version, we saw big carryover effects during data collection. So, we only ever analyzed just 1st 2 trials
 #from all versions togther.
 
 subtable$oldCond <- subtable$Condition
