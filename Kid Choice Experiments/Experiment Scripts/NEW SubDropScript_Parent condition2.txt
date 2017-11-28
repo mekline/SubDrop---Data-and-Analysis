@@ -28,12 +28,6 @@ Oh, see this flap here? Your mom doesn’t know what’s under there. You’ll g
 (Hold binder up so kid & muppets can see, but Mom can’t)
 
 OK, you can flip the orange paper up and see what happens.  
-
-KIDSECRET
-
-Oh, see this flap here? You doesn’t know what’s under there, yah!. In a minute I’m gonna show your mom what’s there, but you don’t know yet!  (If trying to look - “Oh, hold on, you’re not gonna know what’s there for a minute.”)
-
-(Hold binder up so Mom & muppets can see, but kid can’t)
  
 OK, so they flip the orange paper up and see what happens.  This muppet looks under the paper (RH muppet), and so does this one (LH muppet.)  
 
@@ -43,7 +37,7 @@ OK, are you ready? Let’s put the binder down like this (lay out so array is vi
 
 This muppet over here in the polkadots (Right Side) says MONKEY EAT.  And this muppet over here in the stripes (Left Side) says EAT ORANGE. OK? So this one says MONKEY EAT, and this one says EAT ORANGE. 
 
-MAIN: So, which muppet did a better job telling YOU (Kidsecret)/MOM (Momsecret) the story?
+MAIN: So, which muppet did a better job telling MOM (Momsecret) the story?
 
 CONTROL: So, which muppet got the story right?
 
