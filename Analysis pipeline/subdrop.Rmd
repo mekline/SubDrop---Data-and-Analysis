@@ -2,15 +2,6 @@
 title: "Analysis Record - SubDrop Kids project"
 author: "Melissa <<mekline@mit.edu>>"
 date: "`r Sys.Date()`"
-output:
-  tufte::tufte_html: default
-liftr:
-  from: "rocker/r-base:latest"
-  maintainer: "Nan Xiao"
-  email: "me@nanx.me"
-  cran:
-    - tufte
-    - kernlab
 ---
 
 # SubDrop Analysis document
@@ -37,6 +28,7 @@ library(bootstrap)
 library(liftr)
 library(tufte)
 ```
+
 makes some convenience functions,
 ```{r custom-funs, include=FALSE}
 mean.na.rm <- function(x) { mean(x,na.rm=T) }
@@ -52,13 +44,16 @@ bootdown <- function(mylist){
 }
 
 ```
+
 and loads the data
 ```{r load-data, include=FALSE}
 #Get directory of this file
 directory = getwd()
+datadir = str_replace(directory, '/Analysis pipeline','/Data')
 subtable = data.frame(NULL)
-subtable = read.csv(paste0(directory, "/SubDrop_reconciled.csv"), header = TRUE, stringsAsFactors = FALSE)
+subtable = read.csv(paste0(datadir, "/SubDrop_reconciled.csv"), header = TRUE, stringsAsFactors = FALSE)
 ```
+
 Check here to see that your data was loaded:
 ```{r check-data}
 head(subtable[,1:10], n=3)

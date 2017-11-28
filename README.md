@@ -8,26 +8,21 @@ This repository contains:
 
 - The images of stimuli used in the experiment (monkeys eating oranges, etc.)
 
-## Script.txt
+- Script.txt : The script/protocol used to present sequences of stimuli to children and elicit responses
 
-- The script/protocol used to present sequences of stimuli to children and elicit responses
+## Data/ (folder)
 
-## Subdrop_reconciled.csv
+- Subdrop_reconciled.csv: 'Sanitized' version of the data post-blind coding that is used for all analyses in the paper
 
-- 'Sanitized' version of the data post-blind coding that is used for all analyses in the paper
+- BlindCoding.csv: Record of blind coding process
 
-## SubDrop.R
+## Analysis pipeline/ (folder)
 
-- An R script that generates uses SubDrop_reconciled.csv to produce all stats and figs reported in the paper. Will be deprecated by....
+- SubDrop.R: An R script that generates uses SubDrop_reconciled.csv to produce all stats and figs reported in the paper. Will be deprecated by....
 
-## SubDrop.Rmd
+- subdrop.Rmd: An attempt to solve reproducibility with a dockerized RMarkdown pipeline! This will also make a pretty doc (?) for people who prefer not to read R scripts with their eyes. 
 
-- An attempt to solve reproducibility with a dockerized RMarkdown pipeline! This will also make a pretty doc (?) for people who prefer not to read R scripts with their eyes. 
-
-## BlindCoding.csv
-
-- Record of blind coding
-
+- subdrop.html: Pretty reproducible output
 
 ## Materials for running/ (folder)
 
