@@ -13,9 +13,18 @@ library(dplyr)
 library(lsr)
 library(EMT)
 library(ggplot2)
+library(bootstrap)
 mean.na.rm <- function(x) { mean(x,na.rm=T) }
 sum.na.rm <- function(x) { sum(x,na.rm=T) }
 stderr <- function(x) sqrt(var(x)/length(x))
+bootup <- function(mylist){
+  foo <- bootstrap(mylist, 1000, mean)
+  return(quantile(foo$thetastar, 0.975)[1])
+}
+bootdown <- function(mylist){
+  foo <- bootstrap(mylist, 1000, mean)
+  return(quantile(foo$thetastar, 0.025)[1])
+}
 
 #Get directory of this file
 directory = getwd()
@@ -298,7 +307,34 @@ ggplot(data=all.long, aes(x=Age.Years, y=pragNum, fill=PragLabel)) +
 
 ggsave(filename="kid_subdrop.jpg", width=10, height=6)
 
+#########
+#Simpler graph for talks
+main.long$Age.Years <- as.numeric(as.character(main.long$Age.Years))
+main.long$Age.Months <- as.numeric(as.character(main.long$Age.Months))
+graph.main.long <- main.long %>%
+  group_by(Subject, Age.Years, Age.Months) %>%
+  summarise(pragScore = mean(pragChoice)) %>%
+  filter(Age.Years > 2) %>%
+  filter(Age.Years < 7) %>%
+  ungroup() %>%
+  mutate(YearMonths = Age.Years*12 + Age.Months) %>%
+  group_by(YearMonths)%>%
+  summarise_at(c("pragScore"), funs(mean.na.rm, bootup, bootdown))
 
+
+ggplot(data=graph.main.long, aes(x=YearMonths, y=mean.na.rm, fill=YearMonths)) + 
+  geom_bar(position=position_dodge(), stat="identity") +
+  geom_errorbar(aes(ymin=bootdown, ymax=bootup), colour="black", width=.1, position=position_dodge(.9)) +
+  coord_cartesian(ylim=c(0,1)) +
+  xlab('Age in years') +
+  ylab('Percent helpful speakers chosen') +
+  theme(legend.key = element_blank()) +
+  theme_bw() +
+  theme(strip.background = element_blank()) +
+  theme(text = element_text(family="Times", size=rel(4))) +
+  theme(legend.text = element_text(family="Times", size=rel(4))) +
+  theme(axis.text = element_text(family="Times", size=rel(0.9))) +
+  theme(strip.text = element_text(family="Times", size=rel(0.9)))
 
 ############
 ############
