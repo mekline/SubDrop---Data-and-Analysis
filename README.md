@@ -25,10 +25,6 @@ This repository contains:
 - Record of blind coding
 
 
-## Subdrop_protected.xlsx
-
-- Locked xlsx that contained birthday information (PII)
-
 ## Materials for running/ (folder)
 
 - Primarily old versions of script from piloting, counterbalancing sheet, aids for RAs
