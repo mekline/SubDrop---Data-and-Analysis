@@ -8,8 +8,6 @@ date: "`r Sys.Date()`"
 
 Here is (will be) the pipeline for executing all code to get you from subdrop_reconciled.csv to all analyses reported in the paepr
 
-Technical note: This is an R Markdown document that could be rendered under a Docker container using `liftr`. See [this page](https://liftr.me/articles/liftr-intro.html) for instructions on installing Docker and getting the corresponding R markdown output. 
-
 ## Preliminaries
 
 (Code is suppressed here for the most part; see the RMD file if interested). It loads all the libraries,
@@ -27,6 +25,7 @@ library(ggplot2)
 library(bootstrap)
 library(liftr)
 library(tufte)
+library(RColorBrewer)
 ```
 
 makes some convenience functions,
@@ -75,6 +74,7 @@ subtable[is.na(subtable)] <- 0
 #Fix age calculations!
 subtable$Age.Years <- as.numeric(as.character(subtable$Age.Years))
 subtable$Days.Old <- as.numeric(as.character(subtable$Days.Old))
+#(A couple NAs introduced, but they are from 2 dummy lines + 1 kid who was the wrong age for the study)
 
 ####################################
 #Pick subset of data to analyze (experiment, kids included)
@@ -97,7 +97,7 @@ Here is a full report on how many rows are dropped from the analyzed dataset and
 table(dropped$Final.Reason, dropped$Experiment)
 ```
 
-This is followed by yet more data cleaning. One major note: We tried 2-trial (between-subj) and 4-trial (within-subj) versions of the task. With within-subj 4-trial version, we saw big carryover effects during data collection. So, we only ever analyzed just the 1st 2 trials, treating this data as a between-subjects comparison.
+This is followed by yet more data cleaning. One major note: We tried 2-trial (between-subj) and 4-trial (within-subj) versions of the task. With within-subj 4-trial version, we saw big carryover effects during the first part of data collection, and intended to stop collecting the 4-trial version (but did not do so consistently because the extra trials were still in the book.) So, we only ever analyzed just the 1st 2 trials, treating this data as a between-subjects comparison.
 
 ```{r data-clean-2, include=FALSE}
 # Recode condition variables
@@ -152,8 +152,9 @@ subtable[subtable$Condition == "SD",]$choseObjectDrop <- 2-subtable[subtable$Con
 
 ## Descriptive statistics
 
-Just a code block for now
-```{r descriptive-stats}
+First we report some basic descriptive stats for the datasets. We begin by splitting the data into the 'main' and 'control' versions, and limiting the latter to 3- and 4-year-old participants (a few kids of other ages were run in that version thanks to the museum context.)
+
+```{r descriptive-stats, include=FALSE}
 ####################################
 #Descriptive stats for graphing (Developmental, small sample, so we'll present hist. of kids choosing each asnwer, rather than proportion scores)
 
@@ -167,7 +168,257 @@ conttable <- conttable[conttable$Age.Years < 5,]
 conttable <- conttable[conttable$Age.Years > 2,]
 ```
 
-(End of doc, tech details below...)
+First, report the n kids in each sub-experiment (this was useful for checking updates on subjects needed per condition. 
+
+(A note on naming: conditions for the critical experiment are named OD (object-drop) and SD (subject-drop), indicating the *pragmatically correct* answer in a given condition. (In the control experiment, there was a *factually incorrect* answer
+to contrast with a (correct) shortened sentence that dropped either object or subject).
+
+```{r descriptive-stats2, echo=FALSE}
+with(maintable, tapply(as.numeric(as.character(Final.Include)), list(Condition, Age.Years), sum.na.rm), drop=TRUE)
+with(conttable, tapply(as.numeric(as.character(Final.Include)), list(Condition, Age.Years), sum.na.rm), drop=TRUE)
+```
+
+For a quick summary statistic, report how often children 
+chose the object-dropping puppet in the two conditions. 
+
+```{r report-percentage, echo=FALSE}
+numChoose = with(maintable, tapply(as.numeric(as.character(choseObjectDrop)), list(Condition), mean.na.rm), drop=TRUE)
+numChoose/2 #(Two trials chosen, dataset is still in wide form here)
+```
+## Inferential statistics
+
+First we need to melt the dataset for logistic regression...
+
+```{r melt, include=FALSE}
+
+maintable$Condition <- as.factor(maintable$Condition)
+maintable$Subject <- as.factor(maintable$Subject..)
+maintable$choseObjectDrop <- as.factor(maintable$choseObjectDrop)
+maintable$pragChoice_1 <- maintable$isPragChoiceA
+maintable$pragChoice_2 <- maintable$isPragChoiceB
+
+#Get the objective coding scheme back :)
+main.long = wideToLong(maintable,within="trial", sep='_')
+main.long$choseObjectDrop <- main.long$pragChoice
+main.long[main.long$Condition == "SD",]$choseObjectDrop <- 1-main.long[main.long$Condition == "SD",]$pragChoice
+
+conttable$Condition <- as.factor(conttable$Condition)
+conttable$Subject <- as.factor(conttable$Subject..)
+conttable$choseObjectDrop <- as.factor(conttable$choseObjectDrop)
+conttable$pragChoice_1 <- conttable$isPragChoiceA
+conttable$pragChoice_2 <- conttable$isPragChoiceB
+
+#Get the objective coding scheme back :)
+cont.long = wideToLong(conttable,within="trial", sep='_')
+cont.long$choseObjectDrop <- cont.long$pragChoice
+cont.long[cont.long$Condition == "SD",]$choseObjectDrop <- 1-cont.long[cont.long$Condition == "SD",]$pragChoice
+
+```
+
+###Test #1 
+Is the choice of puppet (OD vs. SD) sensitive to condition? (That is, 
+do children choose different puppets depending on the nonlinguistic context.) We did not
+preregister this experiment, but this is the first analysis we tried for these data.
+
+Note that there is no age factor in this model, and that there is a by-trial Condition slope, but no by-participant slope because Condition is manipulated between subjects.
+
+Here and throughout, we evaluate models by comparison to a model lacking the 
+fixed effect of interest. 
+
+```{r all-ages-main}
+
+full_maximal_model <- glmer(choseObjectDrop ~ Condition + (Condition|trial) + (1|Subject), data=main.long, family="binomial")
+
+#compare to model w/o fixed effect
+no_fixed <- glmer(choseObjectDrop ~ 1 + (Condition|trial) + (1|Subject), data=main.long, family="binomial")
+
+anova(full_maximal_model, no_fixed)
+
+```
+
+### Test #2
+Next, is the tendency to choose the (pragmatically) correct choice modulated by age? Here, we switch to analyzing the number of correct choices (rather than n times choosing OD) and collapse across conditions, because question order was not counterbalanced (the order was always OD-SD), so the interaction in 'correctness' between age and (between subject) condition is not interpretable. 
+
+```{r by-age-main}
+
+#Scale age-in-days (by z score), to avoid convergence problems 
+main.long$Scaled.Days.Old <- scale(main.long$Days.Old)
+
+fullmax_age_model <- glmer(pragChoice ~ Scaled.Days.Old + (1|trial) + (1|Subject), data=main.long, family="binomial")
+
+#model with same random effects structure as above
+no_age <- glmer(pragChoice ~ 1 + (1|trial) + (1|Subject), data=main.long, family="binomial")
+
+anova(fullmax_age_model, no_age)
+```
+
+###Test #3 (control experiment)
+Parallel to test #2, for the control experiment. Note only 3 and 4yos participated in this version. We don't attempt to interpret differences between the two conditions (same issues as above.)
+```{r cont-by-age}
+#Scale age (z score), to avoid convergence problems 
+cont.long$Scaled.Days.Old <- scale(cont.long$Days.Old)
+
+# Logistic Regression model.  
+full_max_cont_model <- glmer(pragChoice ~ Scaled.Days.Old + (1|trial) + (1|Subject), data=cont.long, family="binomial")
+
+no_age_cont_model <- glmer(pragChoice ~ 1 + (1|trial) + (1|Subject), data=cont.long, family="binomial")
+
+anova(full_max_cont_model, no_age_cont_model)
+```
+
+### Test 4: Do the 3s and 4s differ on the two different experiments?
+
+Here, we ask whether we should interpret any developmental change *in pragmatic abilities* between the three and 4 year olds, or in other words if we should state definitively that the three-year-olds 'dont' understand' the pragmatic calculation in the main task. We conclude that we can't conclude that! 
+
+```{r threes-fours1, include=FALSE}
+
+main.long$Task <- 'main'
+cont.long$Task <- 'cont'
+threefour.long <- subset(rbind(main.long, cont.long), Age.Years < 5)
+
+#full_max_three_model <- glmer(pragChoice ~ Task*Scaled.Days.Old + (Task|trial) + (1|Subject), data=threefour.long, family="binomial")
+#noeff_three_model <- glmer(pragChoice ~ Task+Scaled.Days.Old + (Task|trial) + (1|Subject), data=threefour.long, family="binomial")
+#that last doesn't converge! So test again with (1|trial)
+```
+
+The full-random-effects models don't initially converge, so we remove the Task/trial slope.
+
+```{r threes-fours2}
+nomax_three_model <- glmer(pragChoice ~ Task*Scaled.Days.Old + (1|trial) + (1|Subject), data=threefour.long, family="binomial")
+nomaxnoeff_three_model <- glmer(pragChoice ~ Task+Scaled.Days.Old + (1|trial) + (1|Subject), data=threefour.long, family="binomial")
+
+anova(nomax_three_model,nomaxnoeff_three_model)
+```
+
+
+### Year-by-year Interpretation
+
+The above describes the main significant effects we see in the dataset, but it's helpful to understand the dataset by binning by year. So, we conduct multinomial tests against chance for each year in both experiments.
+
+```{r year-by-chance, echo=FALSE}
+threes_m <- subset(maintable, Age.Years == 3)
+fours_m <- subset(maintable, Age.Years == 4)
+fives <- subset(maintable, Age.Years == 5)
+sixes <- subset(maintable, Age.Years == 6)
+threes_c <- subset(conttable, Age.Years == 3)
+fours_c <- subset(conttable, Age.Years == 4)
+
+print('threes')
+multinomial.test(as.vector(table(threes_m$pragChoiceScore)),c(0.25, 0.5, 0.25))
+print('fours')
+multinomial.test(as.vector(table(fours_m$pragChoiceScore)),c(0.25, 0.5, 0.25))
+print('fives')
+multinomial.test(as.vector(table(fives$pragChoiceScore)),c(0.25, 0.5, 0.25))
+print('sixes')
+multinomial.test(as.vector(table(sixes$pragChoiceScore)),c(0.25, 0.5, 0.25))
+print('threes, control experiment')
+multinomial.test(as.vector(table(threes_c$pragChoiceScore)),c(0.25, 0.5, 0.25))
+print('fours, control experiment')
+multinomial.test(as.vector(table(fours_c$pragChoiceScore)),c(0.25, 0.5, 0.25))
+```
+
+Similarly, we ask whether the threes and fours (respectively) differ on the two tasks.
+
+```{r three-four-bin, echo=FALSE}
+#Trying the binned version:
+threetab <- rbind(as.vector(table(threes_c$pragChoiceScore)), as.vector(table(threes_m$pragChoiceScore)))
+fourtab <- rbind(as.vector(table(fours_c$pragChoiceScore)), as.vector(table(fours_m$pragChoiceScore)))
+
+fisher.test(threetab)
+fisher.test(fourtab)
+
+```
+
+## Graphs
+
+This is the graph reported in the paper, and some simpler ones used in talks.
+
+```{r paper-graph, echo=FALSE}
+all.long <- rbind(main.long, cont.long) %>%
+  group_by(Subject, Age.Years, Experiment) %>%
+  summarise(pragScore = sum(pragChoice)) %>%
+  group_by(Age.Years, Experiment, pragScore) %>%
+  summarise(pragNum = length(pragScore)) %>% #gosh this is easier, hooray for hadley!
+  filter(Age.Years > 2) %>%
+  filter(Age.Years < 7)
+
+#Labels/formats for graphing
+all.long$Age.Years <- factor(all.long$Age.Years, levels = unique(all.long$Age.Years))
+all.long$pragScore <- factor(all.long$pragScore, levels = unique(all.long$pragScore))
+all.long$ExpLabel = ""
+all.long[all.long$Experiment == "ParentSecret",]$ExpLabel <- "Main experiment (helpful/unhelpful)"
+all.long[all.long$Experiment == "ParentSecretControl",]$ExpLabel <- "Control (true/false)"
+all.long$ExpLabel <- factor(all.long$ExpLabel, levels = c("Main experiment (helpful/unhelpful)", "Control (true/false)"))
+all.long$PragLabel = ""
+all.long[all.long$pragScore == 0,]$PragLabel <- 'n=0'
+all.long[all.long$pragScore == 1,]$PragLabel <- 'n=1'
+all.long[all.long$pragScore == 2,]$PragLabel <- 'n=2'
+all.long$PragLabel <- factor(all.long$PragLabel, levels = c("n=0","n=1","n=2"))
+my.cols <- brewer.pal(7, "Oranges")
+my.cols <- my.cols[c(2,4,6)]
+
+ggplot(data=all.long, aes(x=Age.Years, y=pragNum, fill=PragLabel)) + 
+  geom_bar(position=position_dodge(), stat="identity") +
+  facet_grid(~ExpLabel, scale='free_x', space='free_x') +
+  coord_cartesian(ylim=c(0,16)) +
+  xlab('Age in years') +
+  ylab('Number of children choosing n helpful/correct') +
+  theme(legend.key = element_blank()) +
+  theme_bw() +
+  theme(strip.background = element_blank()) +
+  scale_fill_manual(name="", values=my.cols) +
+  theme(text = element_text(family="Times", size=rel(4))) +
+  theme(legend.text = element_text(family="Times", size=rel(4))) +
+  theme(axis.text = element_text(family="Times", size=rel(0.9))) +
+  theme(strip.text = element_text(family="Times", size=rel(0.9)))
+
+# Option to save output
+# ggsave(filename="kid_subdrop.jpg", width=10, height=6)
+```
+
+```{r simple-graph, echo=FALSE}
+main.long$Age.Years <- as.numeric(as.character(main.long$Age.Years))
+main.long$Age.Months <- as.numeric(as.character(main.long$Age.Months))
+graph.main.long <- main.long %>%
+  group_by(Subject, Age.Years, Age.Months) %>%
+  summarise(pragScore = mean(pragChoice)) %>%
+  filter(Age.Years > 2) %>%
+  filter(Age.Years < 7) %>%
+  ungroup() %>%
+  mutate(YearMonths = Age.Years*12 + Age.Months) %>%
+  group_by(Age.Years)%>%
+  summarise_at(c("pragScore"), funs(mean.na.rm, bootup, bootdown))
+
+
+ggplot(data=graph.main.long, aes(x=Age.Years, y=mean.na.rm, fill=Age.Years)) + 
+  geom_bar(position=position_dodge(), stat="identity") +
+  geom_errorbar(aes(ymin=bootdown, ymax=bootup), colour="black", width=.1, position=position_dodge(.9)) +
+  coord_cartesian(ylim=c(0,1)) +
+  xlab('Age in years') +
+  ylab('Percent helpful speakers chosen') +
+  theme(legend.key = element_blank()) +
+  theme_bw() +
+  theme(strip.background = element_blank()) +
+  theme(text = element_text(family="Times", size=rel(4))) +
+  theme(legend.text = element_text(family="Times", size=rel(4))) +
+  theme(axis.text = element_text(family="Times", size=rel(0.9))) +
+  theme(strip.text = element_text(family="Times", size=rel(0.9)))
+```
+
+And a fairly uninformative dot plot. 
+
+```{r dot-plot, echo=FALSE}
+#Make a pretty dot graph I hope?
+Scores <- aggregate(main.long$pragChoice, list(main.long$Subject), sum)
+names(Scores) <- c("Subject","Score")
+Ages <- main.long[ !duplicated(main.long$Subject), c("Subject","Days.Old")]
+
+foo <- merge(Scores,Ages)
+
+foo$JitScore <- jitter(foo$Score)
+
+plot( foo$Days.Old, foo$JitScore)
+```
 
 ## Session information
 

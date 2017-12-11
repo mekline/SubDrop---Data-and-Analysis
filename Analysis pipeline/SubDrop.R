@@ -14,6 +14,7 @@ library(lsr)
 library(EMT)
 library(ggplot2)
 library(bootstrap)
+library(pwr)
 mean.na.rm <- function(x) { mean(x,na.rm=T) }
 sum.na.rm <- function(x) { sum(x,na.rm=T) }
 stderr <- function(x) sqrt(var(x)/length(x))
@@ -352,7 +353,7 @@ foo$JitScore <- jitter(foo$Score)
 
 plot( foo$Days.Old, foo$JitScore)
 
-#A final power analysis.
+#A final power analysis on the 3s?
 
 #1) Assume they are at change for prag and at observed for t/f task. What is the nsubj needed to test for a difference with 1 trial
 
