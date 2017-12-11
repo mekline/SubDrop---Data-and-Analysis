@@ -26,6 +26,7 @@ library(bootstrap)
 library(liftr)
 library(tufte)
 library(RColorBrewer)
+library(pwr)
 ```
 
 makes some convenience functions,
@@ -290,6 +291,22 @@ nomaxnoeff_three_model <- glmer(pragChoice ~ Task+Scaled.Days.Old + (1|trial) + 
 anova(nomax_three_model,nomaxnoeff_three_model)
 ```
 
+(Note that we also are underpowered here: to *detect* a difference in performance (assuming that 3yos were actually at chance on the pragmatic version and at the observed level on
+the control task)) we'd need 103 kids!
+
+```{r sad-power-test, echo=FALSE}
+
+#Simulate some (proportion data) corresponding to the observed cont data and the null
+p1 = mean(subset(cont.long, Age.Years < 4)$pragChoice)
+multi = c(p1^2, 2*p1*(1-p1), (1-p1)^2)
+nullmulti = c(0.25,0.5,0.25)
+
+#What's that effect size?
+w = sqrt(((multi[1]-nullmulti[1])^2)/nullmulti[1] + ((multi[2]-nullmulti[2])^2)/nullmulti[2] + ((multi[3]-nullmulti[3])^2)/nullmulti[3])
+
+#Power test
+pwr.chisq.test(w = w,  sig.level = 0.05, power = 0.8, df=2)
+```
 
 ### Year-by-year Interpretation
 
