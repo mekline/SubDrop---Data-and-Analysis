@@ -24,18 +24,7 @@ This repository contains:
 
 - subdrop.html: Pretty reproducible output
 
-## Materials for running/ (folder)
+## Etc/ (folder)
 
-- Primarily old versions of script from piloting, counterbalancing sheet, aids for RAs
-
-## Supplemental analyses/ (folder)
-
+- Aids for RAs - old versions of script from piloting, counterbalancing sheet for keeping track of assignment, etc.
 - Analyses performed by RAs as part of their summer projects, and Melissa as part of her thesis
-
-### old notes for RAs
-<a href="http://www.calculator.net/age-calculator.html">Link to age calculator!</a>
-
-
-some RA notes summer 2015
-MelSubDrop.csv = SubDrop_Data.csv rows of 3-4yos from summer
-SubDrop (data for merge).csv - MelSubDrop.csv subsetted columns
