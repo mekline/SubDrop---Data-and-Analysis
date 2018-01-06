@@ -1,7 +1,8 @@
 ---
 title: "Analysis Record - SubDrop Kids project"
 author: "Melissa <<mekline@mit.edu>>"
-date: "`r Sys.Date()`"
+date: '`r Sys.Date()`'
+output: pdf_document
 ---
 
 # SubDrop Analysis document
